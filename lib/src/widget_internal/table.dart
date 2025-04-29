@@ -27,7 +27,7 @@ class InternalTableState extends State<InternalTable> {
   late ScrollController _headController;
   late ScrollController _horizontalBodyController;
   late LinkedScrollControllerGroup _verticalLinkedControllers;
-  late ScrollController _firstColumnController;
+  late ScrollController _fixedColumnsController;
   late ScrollController _restColumnsController;
 
   @override
@@ -37,7 +37,7 @@ class InternalTableState extends State<InternalTable> {
     _headController = _horizontalLinkedControllers.addAndGet();
     _horizontalBodyController = _horizontalLinkedControllers.addAndGet();
     _verticalLinkedControllers = LinkedScrollControllerGroup();
-    _firstColumnController = _verticalLinkedControllers.addAndGet();
+    _fixedColumnsController = _verticalLinkedControllers.addAndGet();
     _restColumnsController = _verticalLinkedControllers.addAndGet();
   }
 
@@ -46,7 +46,7 @@ class InternalTableState extends State<InternalTable> {
     _headController.dispose();
     _horizontalBodyController.dispose();
     _restColumnsController.dispose();
-    _firstColumnController.dispose();
+    _fixedColumnsController.dispose();
     super.dispose();
   }
 
@@ -99,33 +99,41 @@ class InternalTableState extends State<InternalTable> {
           Builder(
             builder: (context) {
               final Widget child = ListView(
-                controller: _firstColumnController,
+                controller: _fixedColumnsController,
                 physics: const ClampingScrollPhysics(),
-                children: data.allRows
-                    .map(
-                      (e) => ChangeNotifierProvider<ExpandableTableRow>.value(
-                        value: e,
-                        builder: (context, child) => ExpandableTableCellWidget(
-                          row: context.watch<ExpandableTableRow>(),
-                          height: context.watch<ExpandableTableRow>().height ??
-                              data.defaultsRowHeight,
-                          width: data.firstColumnWidth,
-                          builder: context
-                              .watch<ExpandableTableRow>()
-                              .firstCell
-                              .build,
-                          onTap: () {
-                            if (!e.disableDefaultOnTapExpansion) {
-                              e.toggleExpand();
-                            }
-                          },
-                        ),
-                      ),
-                    )
-                    .toList(),
+                children: data.allRows.map(
+                  (e) => ChangeNotifierProvider<ExpandableTableRow>.value(
+                    value: e,
+                    builder: (context, child) => Row(
+                      children: context.watch<ExpandableTableRow>().fixedCells.asMap().entries.map(
+                        (entry) {
+                          final int index = entry.key;
+                          final ExpandableTableCell cell = entry.value;
+                          final double width = index < data.fixedColumnWidths.length 
+                              ? data.fixedColumnWidths[index] 
+                              : data.fixedColumnWidths.last;
+                          
+                          return ExpandableTableCellWidget(
+                            row: context.watch<ExpandableTableRow>(),
+                            height: context.watch<ExpandableTableRow>().height ??
+                                data.defaultsRowHeight,
+                            width: width,
+                            builder: cell.build,
+                            onTap: () {
+                              if (!e.disableDefaultOnTapExpansion) {
+                                e.toggleExpand();
+                              }
+                            },
+                          );
+                        },
+                      ).toList(),
+                    ),
+                  ),
+                ).toList(),
               );
+              
               return SizedBox(
-                width: data.firstColumnWidth,
+                width: data.getTotalFixedColumnsWidth(),
                 child: ScrollConfiguration(
                   behavior: ScrollConfiguration.of(context)
                       .copyWith(scrollbars: false),
@@ -137,7 +145,7 @@ class InternalTableState extends State<InternalTable> {
                     duration: data.scrollShadowDuration,
                     child: data.visibleScrollbar
                         ? Scrollbar(
-                            controller: _firstColumnController,
+                            controller: _fixedColumnsController,
                             thumbVisibility: data.thumbVisibilityScrollbar,
                             trackVisibility: data.trackVisibilityScrollbar,
                             scrollbarOrientation: ScrollbarOrientation.left,
@@ -204,15 +212,23 @@ class InternalTableState extends State<InternalTable> {
         ],
       );
 
-  double _computeTableWidth({required ExpandableTableController data}) =>
-      data.firstColumnWidth +
-      (data.headers
-          .map((e) =>
-              (e.width ?? data.defaultsColumnWidth) +
-              _computeChildrenWidth(
-                  expandableTableHeader: e,
-                  defaultsColumnWidth: data.defaultsColumnWidth))
-          .reduce((value, element) => value + element));
+  double _computeTableWidth({required ExpandableTableController data}) {
+    final double fixedWidth = data.getTotalFixedColumnsWidth();
+    
+    if (data.headers.isEmpty) {
+      return fixedWidth;
+    }
+    
+    final double headersWidth = data.headers
+        .map((e) =>
+            (e.width ?? data.defaultsColumnWidth) +
+            _computeChildrenWidth(
+                expandableTableHeader: e,
+                defaultsColumnWidth: data.defaultsColumnWidth))
+        .reduce((value, element) => value + element);
+        
+    return fixedWidth + headersWidth;
+  }
 
   double _computeTableHeight({required ExpandableTableController data}) =>
       data.headerHeight +
@@ -265,10 +281,20 @@ class InternalTableState extends State<InternalTable> {
             height: data.headerHeight,
             child: Row(
               children: [
-                ExpandableTableCellWidget(
-                  height: data.headerHeight,
-                  width: data.firstColumnWidth,
-                  builder: data.firstHeaderCell.build,
+                Row(
+                  children: data.fixedHeaderCells.asMap().entries.map((entry) {
+                    final int index = entry.key;
+                    final ExpandableTableCell cell = entry.value;
+                    final double width = index < data.fixedColumnWidths.length 
+                        ? data.fixedColumnWidths[index] 
+                        : data.fixedColumnWidths.last;
+                    
+                    return ExpandableTableCellWidget(
+                      height: data.headerHeight,
+                      width: width,
+                      builder: cell.build,
+                    );
+                  }).toList(),
                 ),
                 Expanded(
                   child: ScrollShadow(

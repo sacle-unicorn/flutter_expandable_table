@@ -7,7 +7,7 @@ import 'package:flutter_expandable_table/flutter_expandable_table.dart';
 const Color _primaryColor = Color(0xFF1e2f36); //corner
 const Color _accentColor = Color(0xFF0d2026); //background
 const TextStyle _textStyle = TextStyle(color: Colors.white);
-// const TextStyle _textStyleSubItems = TextStyle(color: Colors.grey);
+const TextStyle _priceStyle = TextStyle(color: Colors.greenAccent, fontWeight: FontWeight.bold);
 
 void main() => runApp(const _MyApp());
 
@@ -45,7 +45,54 @@ class _DefaultCellCard extends StatelessWidget {
       );
 }
 
+class Product {
+  final String name;
+  final double price;
+  final int quantity;
+  final String category;
+
+  Product({
+    required this.name,
+    required this.price,
+    required this.quantity,
+    required this.category,
+  });
+
+  double get total => price * quantity;
+}
+
 class _MyHomePageState extends State<_MyHomePage> {
+  // Sample product data
+  final List<Product> _products = [
+    Product(name: 'Laptop', price: 999.99, quantity: 5, category: 'Electronics'),
+    Product(name: 'Smartphone', price: 499.99, quantity: 10, category: 'Electronics'),
+    Product(name: 'Headphones', price: 99.99, quantity: 20, category: 'Electronics'),
+    Product(name: 'Chair', price: 149.99, quantity: 8, category: 'Furniture'),
+    Product(name: 'Desk', price: 249.99, quantity: 5, category: 'Furniture'),
+    Product(name: 'Bookshelf', price: 199.99, quantity: 3, category: 'Furniture'),
+    Product(name: 'T-shirt', price: 19.99, quantity: 50, category: 'Clothing'),
+    Product(name: 'Jeans', price: 49.99, quantity: 30, category: 'Clothing'),
+    Product(name: 'Jacket', price: 79.99, quantity: 15, category: 'Clothing'),
+  ];
+
+  // Group products by category
+  Map<String, List<Product>> get _groupedProducts {
+    final Map<String, List<Product>> result = {};
+    for (var product in _products) {
+      if (!result.containsKey(product.category)) {
+        result[product.category] = [];
+      }
+      result[product.category]!.add(product);
+    }
+    return result;
+  }
+
+  // Calculate total price for a category
+  double _calculateCategoryTotal(String category) {
+    final products = _groupedProducts[category] ?? [];
+    return products.fold(0, (sum, product) => sum + product.total);
+  }
+
   ExpandableTableCell _buildCell(String content, {CellBuilder? builder}) =>
       ExpandableTableCell(
         child: builder != null
@@ -61,171 +108,113 @@ class _MyHomePageState extends State<_MyHomePage> {
         builder: builder,
       );
 
-  ExpandableTableCell _buildFirstRowCell() => ExpandableTableCell(
-        builder: (context, details) => _DefaultCellCard(
-          child: Padding(
-            padding: const EdgeInsets.only(left: 16.0),
-            child: Row(
-              children: [
-                SizedBox(
-                  width: 24 * details.row!.address.length.toDouble(),
-                  child: details.row?.children != null
-                      ? Align(
-                          alignment: Alignment.centerRight,
-                          child: AnimatedRotation(
-                            duration: const Duration(milliseconds: 500),
-                            turns: details.row?.childrenExpanded == true
-                                ? 0.25
-                                : 0,
-                            child: const Icon(
-                              Icons.keyboard_arrow_right,
-                              color: Colors.white,
-                            ),
-                          ),
-                        )
-                      : null,
-                ),
-                Text(
-                  '${details.row!.address.length > 1 ? details.row!.address.skip(1).map((e) => 'Sub ').join() : ''}Row ${details.row!.address.last}',
-                  style: _textStyle,
-                ),
-              ],
+  ExpandableTableCell _buildPriceCell(double price) =>
+      ExpandableTableCell(
+        child: _DefaultCellCard(
+          child: Center(
+            child: Text(
+              '\$${price.toStringAsFixed(2)}',
+              style: _priceStyle,
             ),
           ),
         ),
       );
 
-  ExpandableTable _buildSimpleTable() {
-    const int columnsCount = 20;
-    const int rowsCount = 20;
+  ExpandableTable _buildProductTable() {
     //Creation header
-    final List<ExpandableTableHeader> headers = List.generate(
-      columnsCount - 1,
-      (index) => ExpandableTableHeader(
-        width: index % 2 == 0 ? 200 : 150,
-        cell: _buildCell('Column $index'),
+    final List<ExpandableTableHeader> headers = [
+      ExpandableTableHeader(
+        width: 150,
+        cell: _buildCell('Name'),
       ),
-    );
+      ExpandableTableHeader(
+        width: 150,
+        cell: _buildCell('Price'),
+      ),
+      ExpandableTableHeader(
+        width: 150,
+        cell: _buildCell('Quantity'),
+      ),
+      ExpandableTableHeader(
+        width: 150,
+        cell: _buildCell('Total Value'),
+      ),
+    ];
+
     //Creation rows
-    final List<ExpandableTableRow> rows = List.generate(
-      rowsCount,
-      (rowIndex) => ExpandableTableRow(
-        height: rowIndex % 2 == 0 ? 50 : 70,
-        firstCell: _buildCell('Row $rowIndex'),
-        cells: List<ExpandableTableCell>.generate(
-          columnsCount - 1,
-          (columnIndex) => _buildCell('Cell $rowIndex:$columnIndex'),
+    final List<ExpandableTableRow> rows = [];
+
+    // Add rows for each category and its products
+    _groupedProducts.forEach((category, products) {
+      // Add grouped row for the category with total price
+      final double categoryTotal = _calculateCategoryTotal(category);
+      
+      final List<ExpandableTableRow> productRows = products.map((product) {
+        return ExpandableTableRow(
+          fixedCells: [
+            _buildCell('-'),
+            _buildPriceCell(product.price),
+          ],
+          cells: [
+            _buildCell(product.name),
+            _buildCell(product.price.toString()),
+            _buildCell(product.quantity.toString()),
+            _buildPriceCell(product.total),
+          ],
+        );
+      }).toList();
+      
+      rows.add(
+        ExpandableTableRow(
+          fixedCells: [
+            _buildCell(category),
+            _buildPriceCell(categoryTotal),
+          ],
+          legend: _DefaultCellCard(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16.0),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      '$category Category - ${products.length} products - Total Value: \$${categoryTotal.toStringAsFixed(2)}',
+                      style: _textStyle,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          children: productRows,
         ),
-      ),
-    );
+      );
+    });
 
     return ExpandableTable(
-      firstHeaderCell: _buildCell('Simple\nTable'),
+      fixedHeaderCells: [_buildCell('Category'), _buildCell('Cat. Total')],
+      fixedColumnWidths: const [200, 120], // Width for product name and price columns
       headers: headers,
       scrollShadowColor: _accentColor,
       rows: rows,
       visibleScrollbar: true,
       trackVisibilityScrollbar: true,
       thumbVisibilityScrollbar: true,
-    );
-  }
-
-  static const int columnsCount = 20;
-  static const int subColumnsCount = 2;
-  static const int rowsCount = 6;
-  static const int subRowsCount = 3;
-  static const int totalColumns = columnsCount + subColumnsCount;
-
-  List<ExpandableTableRow> _generateRows(int quantity, {int depth = 0}) {
-    final bool generateLegendRow = (depth == 0 || depth == 2);
-    return List.generate(
-      quantity,
-      (rowIndex) => ExpandableTableRow(
-        firstCell: _buildFirstRowCell(),
-        children: ((rowIndex == 3 || rowIndex == 2) && depth < 3)
-            ? _generateRows(subRowsCount, depth: depth + 1)
-            : null,
-        cells: !(generateLegendRow && (rowIndex == 3 || rowIndex == 2))
-            ? List<ExpandableTableCell>.generate(
-                totalColumns,
-                (columnIndex) => _buildCell('Cell $rowIndex:$columnIndex'),
-              )
-            : null,
-        legend: generateLegendRow && (rowIndex == 3 || rowIndex == 2)
-            ? const _DefaultCellCard(
-                child: Align(
-                  alignment: FractionalOffset.centerLeft,
-                  child: Padding(
-                    padding: EdgeInsets.only(left: 24.0),
-                    child: Text(
-                      'This is row legend',
-                      style: _textStyle,
-                    ),
-                  ),
-                ),
-              )
-            : null,
-      ),
-    );
-  }
-
-  ExpandableTable _buildExpandableTable() {
-    //Creation header
-    final List<ExpandableTableHeader> subHeader = List.generate(
-      subColumnsCount,
-      (index) => ExpandableTableHeader(
-        cell: _buildCell('Sub Column $index'),
-      ),
-    );
-
-    //Creation header
-    final List<ExpandableTableHeader> headers = List.generate(
-      columnsCount,
-      (index) => ExpandableTableHeader(
-          cell: _buildCell(
-              '${index == 1 ? 'Expandable\nColumn' : 'Column'} $index'),
-          children: index == 1 ? subHeader : null),
-    );
-
-    return ExpandableTable(
-      firstHeaderCell: _buildCell('Expandable\nTable'),
-      rows: _generateRows(rowsCount),
-      headers: headers,
+      headerHeight: 60,
       defaultsRowHeight: 60,
       defaultsColumnWidth: 150,
-      firstColumnWidth: 250,
-      scrollShadowColor: _accentColor,
-      visibleScrollbar: true,
-      expanded: false,
     );
   }
 
   @override
   Widget build(BuildContext context) => Scaffold(
         appBar: AppBar(
-          title: const Text(
-              '   Simple Table                    |                    Expandable Table'),
+          title: const Text('Products Table with Multiple Fixed Columns'),
           centerTitle: true,
         ),
         body: Container(
           color: _accentColor,
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(
-                child: Padding(
-                  padding: const EdgeInsets.all(20.0),
-                  child: _buildSimpleTable(),
-                ),
-              ),
-              Expanded(
-                child: Padding(
-                  padding: const EdgeInsets.all(20.0),
-                  child: _buildExpandableTable(),
-                ),
-              ),
-            ],
-          ),
+          padding: const EdgeInsets.all(20.0),
+          child: _buildProductTable(),
         ),
       );
 }

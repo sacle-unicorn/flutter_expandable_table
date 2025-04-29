@@ -7,12 +7,12 @@ import 'package:flutter_expandable_table/flutter_expandable_table.dart';
 /// [ExpandableTableRow] class.
 /// This class defines a single table row.
 class ExpandableTableRow extends ChangeNotifier {
-  /// [firstCell] defines the contents of the first cell, this cell
-  /// is the cell that remains fixed during horizontal scrolling..
+  /// [fixedCells] defines the contents of the fixed cells, these cells
+  /// remain fixed during horizontal scrolling.
   /// `required`
-  final ExpandableTableCell firstCell;
+  final List<ExpandableTableCell> fixedCells;
 
-  /// [cells] defines the cells in the row, excluding the first one on the left.
+  /// [cells] defines the cells in the row, excluding the fixed ones on the left.
   /// The length of this list must be identical to the total headers, including nested ones.
   /// `optional, if it is not defined, the legend must be defined`
   final List<ExpandableTableCell>? cells;
@@ -85,7 +85,7 @@ class ExpandableTableRow extends ChangeNotifier {
   /// [ExpandableTableRow] class constructor.
   /// This class defines a single table row.
   ExpandableTableRow({
-    required this.firstCell,
+    required this.fixedCells,
     this.cells,
     this.legend,
     List<ExpandableTableRow>? children,
@@ -150,7 +150,7 @@ class ExpandableTableRow extends ChangeNotifier {
     return count;
   }
 
-  /// [cellsCount] returns the number of cells in the row, excluding the first.
+  /// [cellsCount] returns the number of cells in the row, excluding the fixed ones.
   int? get cellsCount => cells?.length;
 
   /// [visible] returns true if this row is currently visible.

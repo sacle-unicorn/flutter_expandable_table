@@ -115,7 +115,7 @@ class _MyHomePageState extends State<MyHomePage> {
       rowsCount,
       (rowIndex) => ExpandableTableRow(
         height: rowIndex % 2 == 0 ? 50 : 70,
-        firstCell: _buildCell('_Row $rowIndex'),
+        fixedCells: [_buildCell('_Row $rowIndex')],
         cells: List<ExpandableTableCell>.generate(
           columnsCount - 1,
           (columnIndex) => _buildCell('_Cell $rowIndex:$columnIndex'),
@@ -124,7 +124,7 @@ class _MyHomePageState extends State<MyHomePage> {
     );
 
     return ExpandableTable(
-      firstHeaderCell: _buildCell('Simple\nTable'),
+      fixedHeaderCells: [_buildCell('Simple\nTable')],
       headers: headers,
       scrollShadowColor: accentColor,
       rows: rows,
@@ -142,7 +142,7 @@ class _MyHomePageState extends State<MyHomePage> {
     return List.generate(
       quantity,
       (rowIndex) => ExpandableTableRow(
-        firstCell: _buildFirstRowCell(),
+        fixedCells: [_buildFirstRowCell()],
         children: ((rowIndex == 3 || rowIndex == 2) && depth < 3)
             ? _generateRows(subRowsCount, depth: depth + 1)
             : null,
@@ -189,12 +189,12 @@ class _MyHomePageState extends State<MyHomePage> {
     );
 
     return ExpandableTable(
-      firstHeaderCell: _buildCell('Expandable\nTable'),
+      fixedHeaderCells: [_buildCell('Expandable\nTable')],
       rows: _generateRows(rowsCount),
       headers: headers,
       defaultsRowHeight: 60,
       defaultsColumnWidth: 150,
-      firstColumnWidth: 250,
+      fixedColumnWidths: const [250],
       scrollShadowColor: accentColor,
     );
   }

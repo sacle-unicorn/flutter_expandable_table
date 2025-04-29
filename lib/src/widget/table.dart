@@ -13,10 +13,10 @@ import 'package:flutter_expandable_table/src/widget_internal/table.dart';
 
 /// [ExpandableTable] class.
 class ExpandableTable extends StatefulWidget {
-  /// [firstHeaderCell] is the top left cell, i.e. the first header cell.
+  /// [fixedHeaderCells] is the list of fixed header cells at the top left of the table.
   /// Not to be used if the [controller] is used.
   /// `optional`
-  final ExpandableTableCell? firstHeaderCell;
+  final List<ExpandableTableCell>? fixedHeaderCells;
 
   /// [headers] contains the list of all column headers,
   /// each one of these can contain a list of further headers,
@@ -36,10 +36,10 @@ class ExpandableTable extends StatefulWidget {
   /// `Default: 188`
   final double headerHeight;
 
-  /// [firstColumnWidth] determines first Column width size.
+  /// [fixedColumnWidths] determines the widths of fixed columns.
   ///
-  /// Default: [200]
-  final double firstColumnWidth;
+  /// Default: [[200]]
+  final List<double> fixedColumnWidths;
 
   /// [defaultsColumnWidth] defines the default width of all columns,
   /// it is possible to redefine it for each individual column.
@@ -103,32 +103,32 @@ class ExpandableTable extends StatefulWidget {
 
   /// [controller] specifies the external controller of the table, allows
   /// you to dynamically manage the data in the table externally.
-  /// Do not use if [firstHeaderCell], [headers] and [rows] are passed
+  /// Do not use if [fixedHeaderCells], [headers] and [rows] are passed
   /// 'optional'
   final ExpandableTableController? controller;
 
   /// [ExpandableTable] class constructor.
   /// Required:
-  ///   - [firstHeaderCell]
+  ///   - [fixedHeaderCells]
   ///   - [rows]
   ///   - [headers]
   /// ```dart
   ///      return ExpandableTable(
-  ///       firstHeaderCell: ExpandableTableCell(
-  ///         child: Text('Simple\nTable'),
-  ///       ),
+  ///       fixedHeaderCells: [ExpandableTableCell(
+  ///         child: Text('Simple\\nTable'),
+  ///       )],
   ///       headers: headers,
   ///       rows: rows,
   ///     );
   /// ```
   const ExpandableTable({
     super.key,
-    this.firstHeaderCell,
+    this.fixedHeaderCells,
     this.headers,
     this.rows,
     this.controller,
     this.headerHeight = 188,
-    this.firstColumnWidth = 200,
+    this.fixedColumnWidths = const [200],
     this.defaultsColumnWidth = 120,
     this.defaultsRowHeight = 50,
     this.duration = const Duration(milliseconds: 500),
@@ -141,7 +141,7 @@ class ExpandableTable extends StatefulWidget {
     this.trackVisibilityScrollbar,
     this.thumbVisibilityScrollbar,
     this.expanded = true,
-  }) : assert(((firstHeaderCell != null && rows != null && headers != null) ||
+  }) : assert(((fixedHeaderCells != null && rows != null && headers != null) ||
                 controller != null) &&
             !(thumbVisibilityScrollbar == false &&
                 (trackVisibilityScrollbar ?? false)));
@@ -175,7 +175,7 @@ class _ExpandableTableState extends State<ExpandableTable> {
         )
       : ChangeNotifierProvider<ExpandableTableController>(
           create: (context) => ExpandableTableController(
-            firstHeaderCell: widget.firstHeaderCell!,
+            fixedHeaderCells: widget.fixedHeaderCells!,
             headers: widget.headers!,
             rows: widget.rows!,
             duration: widget.duration,
@@ -185,7 +185,7 @@ class _ExpandableTableState extends State<ExpandableTable> {
             scrollShadowFadeOutCurve: widget.scrollShadowCurve,
             scrollShadowColor: widget.scrollShadowColor,
             scrollShadowSize: widget.scrollShadowSize,
-            firstColumnWidth: widget.firstColumnWidth,
+            fixedColumnWidths: widget.fixedColumnWidths,
             defaultsColumnWidth: widget.defaultsColumnWidth,
             defaultsRowHeight: widget.defaultsRowHeight,
             headerHeight: widget.headerHeight,

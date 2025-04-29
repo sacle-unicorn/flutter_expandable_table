@@ -6,14 +6,14 @@ import 'package:flutter_expandable_table/flutter_expandable_table.dart';
 
 /// [ExpandableTableController] class.
 class ExpandableTableController extends ChangeNotifier {
-  late ExpandableTableCell _firstHeaderCell;
+  late List<ExpandableTableCell> _fixedHeaderCells;
 
-  /// [firstHeaderCell] is the top left cell, i.e. the first header cell.
+  /// [fixedHeaderCells] is the list of fixed header cells at the top left of the table.
   /// `required`
-  ExpandableTableCell get firstHeaderCell => _firstHeaderCell;
+  List<ExpandableTableCell> get fixedHeaderCells => _fixedHeaderCells;
 
-  set firstHeaderCell(ExpandableTableCell value) {
-    _firstHeaderCell = value;
+  set fixedHeaderCells(List<ExpandableTableCell> value) {
+    _fixedHeaderCells = value;
     notifyListeners();
   }
 
@@ -53,15 +53,15 @@ class ExpandableTableController extends ChangeNotifier {
     notifyListeners();
   }
 
-  late double _firstColumnWidth;
+  late List<double> _fixedColumnWidths;
 
-  /// [firstColumnWidth] determines first Column width size.
+  /// [fixedColumnWidths] determines the widths of fixed columns.
   ///
-  /// Default: [200]
-  double get firstColumnWidth => _firstColumnWidth;
+  /// Default: [[200]]
+  List<double> get fixedColumnWidths => _fixedColumnWidths;
 
-  set firstColumnWidth(double value) {
-    _firstColumnWidth = value;
+  set fixedColumnWidths(List<double> value) {
+    _fixedColumnWidths = value;
     notifyListeners();
   }
 
@@ -137,6 +137,12 @@ class ExpandableTableController extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Calculates the total width of all fixed columns
+  ///
+  /// Returns the sum of all widths in [fixedColumnWidths]
+  double getTotalFixedColumnsWidth() => 
+      _fixedColumnWidths.fold<double>(0.0, (sum, width) => sum + width);
+
   /// [duration] determines duration rendered animation of Rows/Columns expansion.
   ///
   /// Default: [500ms]
@@ -181,7 +187,7 @@ class ExpandableTableController extends ChangeNotifier {
 
   /// [ExpandableTableController] class constructor.
   ExpandableTableController({
-    required ExpandableTableCell firstHeaderCell,
+    required List<ExpandableTableCell> fixedHeaderCells,
     required List<ExpandableTableHeader> headers,
     required List<ExpandableTableRow> rows,
     bool visibleScrollbar = false,
@@ -196,13 +202,13 @@ class ExpandableTableController extends ChangeNotifier {
     this.scrollShadowColor = Colors.transparent,
     this.scrollShadowSize = 10,
     double headerHeight = 188,
-    double firstColumnWidth = 200,
+    List<double> fixedColumnWidths = const [200],
     double defaultsColumnWidth = 120,
     double defaultsRowHeight = 50,
   }) {
-    _firstHeaderCell = firstHeaderCell;
+    _fixedHeaderCells = fixedHeaderCells;
     _headerHeight = headerHeight;
-    _firstColumnWidth = firstColumnWidth;
+    _fixedColumnWidths = fixedColumnWidths;
     _defaultsColumnWidth = defaultsColumnWidth;
     _defaultsRowHeight = defaultsRowHeight;
     _headers = headers;
