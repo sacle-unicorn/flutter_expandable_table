@@ -140,8 +140,26 @@ class ExpandableTableController extends ChangeNotifier {
   /// Calculates the total width of all fixed columns
   ///
   /// Returns the sum of all widths in [fixedColumnWidths]
-  double getTotalFixedColumnsWidth() => 
-      _fixedColumnWidths.fold<double>(0.0, (sum, width) => sum + width);
+  double getTotalFixedColumnsWidth() {
+    // Problem: fixed-column layouts clipped when there were more fixed headers
+    // than explicit fixed widths.
+    // Root cause: the previous implementation summed only the provided width
+    // list instead of the number of rendered fixed header cells.
+    // Solution: sum one width per fixed header cell and reuse the last explicit
+    // width for any remaining fixed columns.
+    if (_fixedHeaderCells.isEmpty || _fixedColumnWidths.isEmpty) {
+      return 0;
+    }
+
+    return Iterable<int>.generate(_fixedHeaderCells.length).fold<double>(
+      0.0,
+      (sum, index) =>
+          sum +
+          (index < _fixedColumnWidths.length
+              ? _fixedColumnWidths[index]
+              : _fixedColumnWidths.last),
+    );
+  }
 
   /// [duration] determines duration rendered animation of Rows/Columns expansion.
   ///

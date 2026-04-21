@@ -156,15 +156,34 @@ class _ExpandableTableState extends State<ExpandableTable> {
     if (widget.controller == null) {
       final int totalColumns =
           widget.headers!.map((e) => e.columnsCount).fold(0, (a, b) => a + b);
-      for (int i = 0; i < widget.rows!.length; i++) {
-        if (widget.rows![i].cellsCount != null &&
-            widget.rows![i].cellsCount != totalColumns) {
-          throw FormatException(
-              'Row $i cells count ${widget.rows![i].cellsCount} <> $totalColumns header cell count.');
-        }
-      }
+      _validateRows(widget.rows!, totalColumns);
     }
     super.initState();
+  }
+
+  void _validateRows(
+    List<ExpandableTableRow> rows,
+    int totalColumns, {
+    List<int> path = const [],
+  }) {
+    // Problem: malformed nested rows could bypass validation and fail later
+    // during render with harder-to-debug layout issues.
+    // Root cause: validation only checked the top-level row list.
+    // Solution: walk the full row tree recursively and report the precise row
+    // path that mismatches the header cell count.
+    for (var i = 0; i < rows.length; i++) {
+      final row = rows[i];
+      final rowPath = [...path, i];
+      if (row.cellsCount != null && row.cellsCount != totalColumns) {
+        throw FormatException(
+          'Row ${rowPath.join(".")} cells count ${row.cellsCount} <> $totalColumns header cell count.',
+        );
+      }
+      final children = row.children;
+      if (children != null && children.isNotEmpty) {
+        _validateRows(children, totalColumns, path: rowPath);
+      }
+    }
   }
 
   @override

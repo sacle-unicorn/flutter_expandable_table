@@ -127,7 +127,12 @@ class ExpandableTableHeader extends ChangeNotifier {
   /// this one and all those nested within it.
   int get visibleColumnsCount {
     int count = childrenExpanded && hideWhenExpanded ? 0 : 1;
-    if (children != null) {
+    // Problem: collapsed header trees still contributed hidden child columns to
+    // visible width calculations.
+    // Root cause: child headers were counted whenever children existed, even if
+    // the branch was not expanded.
+    // Solution: recurse into children only while the current header is expanded.
+    if (children != null && childrenExpanded) {
       for (var e in children!) {
         count += e.visibleColumnsCount;
       }

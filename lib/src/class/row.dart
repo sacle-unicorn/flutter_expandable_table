@@ -93,8 +93,10 @@ class ExpandableTableRow extends ChangeNotifier {
     this.hideWhenExpanded = false,
     bool childrenExpanded = false,
     this.disableDefaultOnTapExpansion = false,
-  }) : assert((cells != null || legend != null) &&
-            (cells == null || legend == null)) {
+  }) : assert(
+          (cells != null || legend != null) &&
+              (cells == null || legend == null),
+        ) {
     _childrenExpanded = childrenExpanded;
     _children = children;
     _addChildrenListener();
@@ -130,9 +132,16 @@ class ExpandableTableRow extends ChangeNotifier {
   /// all those nested within it.
   int get rowsCount {
     int count = 1;
+    // Problem: total row counts became inconsistent after collapsed branches
+    // were introduced, which broke layout math that needs the full tree size.
+    // Root cause: a previous implementation mixed visible-row counting into the
+    // total-row path for children.
+    // Solution: always recurse with rowsCount here so total tree size remains
+    // independent from expansion state.
     if (children != null) {
       for (var e in children!) {
-        count += e.visibleRowsCount;
+        // count += e.visibleRowsCount;
+        count += e.rowsCount;
       }
     }
     return count;
@@ -142,7 +151,13 @@ class ExpandableTableRow extends ChangeNotifier {
   /// this one and all those nested within it.
   int get visibleRowsCount {
     int count = childrenExpanded && hideWhenExpanded ? 0 : 1;
-    if (children != null) {
+
+    // Problem: collapsed row branches still affected visible-height
+    // calculations.
+    // Root cause: children were counted whenever present instead of only when
+    // the branch was expanded.
+    // Solution: recurse into child rows only while this row is expanded. Added && childrenExpanded to if condition.
+    if (children != null && childrenExpanded) {
       for (var e in children!) {
         count += e.visibleRowsCount;
       }

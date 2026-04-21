@@ -52,20 +52,20 @@ class InternalTableState extends State<InternalTable> {
 
   List<Widget> _buildHeaderCells(ExpandableTableController data) =>
       data.allHeaders
-          .map(
-            (e) => ExpandableTableCellWidget(
-              height: data.headerHeight,
-              width: e.width ?? data.defaultsColumnWidth,
-              header: e,
-              onTap: () {
-                if (!e.disableDefaultOnTapExpansion) {
-                  e.toggleExpand();
-                }
-              },
-              builder: e.cell.build,
-            ),
-          )
-          .toList();
+      .map(
+        (e) => ExpandableTableCellWidget(
+          height: data.headerHeight,
+          width: e.width ?? data.defaultsColumnWidth,
+          header: e,
+          onTap: () {
+            if (!e.disableDefaultOnTapExpansion) {
+              e.toggleExpand();
+            }
+          },
+          builder: e.cell.build,
+        ),
+      )
+      .toList();
 
   Widget _buildRowCells(
       ExpandableTableController data, ExpandableTableRow row) {
@@ -95,183 +95,148 @@ class InternalTableState extends State<InternalTable> {
   }
 
   Widget _buildBody(ExpandableTableController data) => Row(
-        children: [
-          Builder(
-            builder: (context) {
-              final Widget child = ListView(
-                controller: _fixedColumnsController,
-                physics: const ClampingScrollPhysics(),
+    children: [
+      Builder(
+        builder: (context) {
+          final Widget child = ListView(
+            controller: _fixedColumnsController,
+            physics: const ClampingScrollPhysics(),
                 children: data.allRows.map(
                   (e) => ChangeNotifierProvider<ExpandableTableRow>.value(
                     value: e,
                     builder: (context, child) => Row(
                       children: context.watch<ExpandableTableRow>().fixedCells.asMap().entries.map(
                         (entry) {
-                          final int index = entry.key;
-                          final ExpandableTableCell cell = entry.value;
+                            final int index = entry.key;
+                            final ExpandableTableCell cell = entry.value;
                           final double width = index < data.fixedColumnWidths.length 
-                              ? data.fixedColumnWidths[index] 
-                              : data.fixedColumnWidths.last;
-                          
-                          return ExpandableTableCellWidget(
-                            row: context.watch<ExpandableTableRow>(),
+                                ? data.fixedColumnWidths[index]
+                                : data.fixedColumnWidths.last;
+
+                            return ExpandableTableCellWidget(
+                              row: context.watch<ExpandableTableRow>(),
                             height: context.watch<ExpandableTableRow>().height ??
-                                data.defaultsRowHeight,
-                            width: width,
-                            builder: cell.build,
-                            onTap: () {
-                              if (!e.disableDefaultOnTapExpansion) {
-                                e.toggleExpand();
-                              }
-                            },
-                          );
+                                  data.defaultsRowHeight,
+                              width: width,
+                              builder: cell.build,
+                              onTap: () {
+                                if (!e.disableDefaultOnTapExpansion) {
+                                  e.toggleExpand();
+                                }
+                              },
+                            );
                         },
                       ).toList(),
                     ),
                   ),
                 ).toList(),
-              );
-              
-              return SizedBox(
-                width: data.getTotalFixedColumnsWidth(),
-                child: ScrollConfiguration(
+          );
+
+          return SizedBox(
+            width: data.getTotalFixedColumnsWidth(),
+            child: ScrollConfiguration(
                   behavior: ScrollConfiguration.of(context)
                       .copyWith(scrollbars: false),
-                  child: ScrollShadow(
-                    size: data.scrollShadowSize,
-                    color: data.scrollShadowColor,
-                    fadeInCurve: data.scrollShadowFadeInCurve,
-                    fadeOutCurve: data.scrollShadowFadeOutCurve,
-                    duration: data.scrollShadowDuration,
-                    child: data.visibleScrollbar
-                        ? Scrollbar(
-                            controller: _fixedColumnsController,
-                            thumbVisibility: data.thumbVisibilityScrollbar,
-                            trackVisibility: data.trackVisibilityScrollbar,
-                            scrollbarOrientation: ScrollbarOrientation.left,
-                            child: child,
-                          )
-                        : child,
-                  ),
-                ),
-              );
-            },
-          ),
-          Builder(
-            builder: (context) {
-              final Widget child = SingleChildScrollView(
-                controller: _horizontalBodyController,
-                scrollDirection: Axis.horizontal,
-                physics: const ClampingScrollPhysics(),
-                child: AnimatedContainer(
-                  width: data.visibleHeadersWidth,
-                  duration: data.duration,
-                  curve: data.curve,
-                  child: ScrollShadow(
-                    size: data.scrollShadowSize,
-                    color: data.scrollShadowColor,
-                    fadeInCurve: data.scrollShadowFadeInCurve,
-                    fadeOutCurve: data.scrollShadowFadeOutCurve,
-                    duration: data.scrollShadowDuration,
-                    child: ListView(
-                      controller: _restColumnsController,
-                      physics: const ClampingScrollPhysics(),
-                      children: data.allRows
+              child: ScrollShadow(
+                size: data.scrollShadowSize,
+                color: data.scrollShadowColor,
+                fadeInCurve: data.scrollShadowFadeInCurve,
+                fadeOutCurve: data.scrollShadowFadeOutCurve,
+                duration: data.scrollShadowDuration,
+                child: data.visibleScrollbar
+                    ? Scrollbar(
+                        controller: _fixedColumnsController,
+                        thumbVisibility: data.thumbVisibilityScrollbar,
+                        trackVisibility: data.trackVisibilityScrollbar,
+                        scrollbarOrientation: ScrollbarOrientation.left,
+                        child: child,
+                      )
+                    : child,
+              ),
+            ),
+          );
+        },
+      ),
+      Builder(
+        builder: (context) {
+          final Widget child = SingleChildScrollView(
+            controller: _horizontalBodyController,
+            scrollDirection: Axis.horizontal,
+            physics: const ClampingScrollPhysics(),
+            child: AnimatedContainer(
+              width: data.visibleHeadersWidth,
+              duration: data.duration,
+              curve: data.curve,
+              child: ScrollShadow(
+                size: data.scrollShadowSize,
+                color: data.scrollShadowColor,
+                fadeInCurve: data.scrollShadowFadeInCurve,
+                fadeOutCurve: data.scrollShadowFadeOutCurve,
+                duration: data.scrollShadowDuration,
+                child: ListView(
+                  controller: _restColumnsController,
+                  physics: const ClampingScrollPhysics(),
+                  children: data.allRows
                           .map(
                             (e) => _buildRowCells(data, e),
                           )
-                          .toList(),
-                    ),
-                  ),
+                      .toList(),
                 ),
-              );
+              ),
+            ),
+          );
 
-              return Expanded(
-                child: ScrollConfiguration(
+          return Expanded(
+            child: ScrollConfiguration(
                   behavior: ScrollConfiguration.of(context)
                       .copyWith(scrollbars: false),
-                  child: ScrollShadow(
-                    size: data.scrollShadowSize,
-                    color: data.scrollShadowColor,
-                    fadeInCurve: data.scrollShadowFadeInCurve,
-                    fadeOutCurve: data.scrollShadowFadeOutCurve,
-                    duration: data.scrollShadowDuration,
-                    child: data.visibleScrollbar
-                        ? Scrollbar(
-                            controller: _horizontalBodyController,
-                            thumbVisibility: data.thumbVisibilityScrollbar,
-                            trackVisibility: data.trackVisibilityScrollbar,
-                            child: child,
-                          )
-                        : child,
-                  ),
-                ),
-              );
-            },
-          ),
-        ],
-      );
+              child: ScrollShadow(
+                size: data.scrollShadowSize,
+                color: data.scrollShadowColor,
+                fadeInCurve: data.scrollShadowFadeInCurve,
+                fadeOutCurve: data.scrollShadowFadeOutCurve,
+                duration: data.scrollShadowDuration,
+                child: data.visibleScrollbar
+                    ? Scrollbar(
+                        controller: _horizontalBodyController,
+                        thumbVisibility: data.thumbVisibilityScrollbar,
+                        trackVisibility: data.trackVisibilityScrollbar,
+                        child: child,
+                      )
+                    : child,
+              ),
+            ),
+          );
+        },
+      ),
+    ],
+  );
 
   double _computeTableWidth({required ExpandableTableController data}) {
-    final double fixedWidth = data.getTotalFixedColumnsWidth();
-    
-    if (data.headers.isEmpty) {
-      return fixedWidth;
-    }
-    
-    final double headersWidth = data.headers
-        .map((e) =>
-            (e.width ?? data.defaultsColumnWidth) +
-            _computeChildrenWidth(
-                expandableTableHeader: e,
-                defaultsColumnWidth: data.defaultsColumnWidth))
-        .reduce((value, element) => value + element);
-        
-    return fixedWidth + headersWidth;
+
+    // Problem: collapsed tables reported widths that still included hidden
+    // expanded descendants.
+    // Root cause: width was recomputed from the full header tree instead of the
+    // controller's visible-header projection.
+    // Solution: use visibleHeadersWidth plus the fixed-column width actually
+    // rendered in the collapsed layout.
+    return data.getTotalFixedColumnsWidth() + data.visibleHeadersWidth;
   }
 
   double _computeTableHeight({required ExpandableTableController data}) =>
-      data.headerHeight +
-      (data.rows
-          .map((e) =>
-              (e.height ?? data.defaultsRowHeight) +
-              _computeChildrenHeight(
-                  expandableTableRow: e,
-                  defaultsRowHeight: data.defaultsRowHeight))
-          .reduce((value, element) => value + element));
-
-  double _computeChildrenHeight({
-    required ExpandableTableRow expandableTableRow,
-    required double defaultsRowHeight,
-  }) =>
-      expandableTableRow.childrenExpanded
-          ? expandableTableRow.children!
-              .map((e) =>
-                  (e.height ?? defaultsRowHeight) +
-                  _computeChildrenHeight(
-                      expandableTableRow: e,
-                      defaultsRowHeight: defaultsRowHeight))
-              .reduce((value, element) => value + element)
-          : 0;
-
-  double _computeChildrenWidth({
-    required ExpandableTableHeader expandableTableHeader,
-    required double defaultsColumnWidth,
-  }) =>
-      expandableTableHeader.childrenExpanded
-          ? expandableTableHeader.children!
-              .map((e) =>
-                  (e.width ?? defaultsColumnWidth) +
-                  _computeChildrenWidth(
-                      expandableTableHeader: e,
-                      defaultsColumnWidth: defaultsColumnWidth))
-              .reduce((value, element) => value + element)
-          : 0;
+      // Fix documentation:
+      // Problem: collapsed tables could over-report height, and zero-row tables
+      // could hit invalid reductions while computing body height.
+      // Root cause: height used full row-tree traversal instead of the
+      // controller's visible row height aggregate.
+      // Solution: derive height from visibleRowsHeight so only rendered rows
+      // contribute and empty tables remain valid.
+      data.headerHeight + data.visibleRowsHeight;
 
   @override
   Widget build(BuildContext context) {
-    final ExpandableTableController data =
-        context.watch<ExpandableTableController>();
+    final ExpandableTableController data = context
+        .watch<ExpandableTableController>();
     return SizedBox(
       width: data.expanded ? null : _computeTableWidth(data: data),
       height: data.expanded ? null : _computeTableHeight(data: data),
@@ -285,10 +250,10 @@ class InternalTableState extends State<InternalTable> {
                   children: data.fixedHeaderCells.asMap().entries.map((entry) {
                     final int index = entry.key;
                     final ExpandableTableCell cell = entry.value;
-                    final double width = index < data.fixedColumnWidths.length 
-                        ? data.fixedColumnWidths[index] 
+                    final double width = index < data.fixedColumnWidths.length
+                        ? data.fixedColumnWidths[index]
                         : data.fixedColumnWidths.last;
-                    
+
                     return ExpandableTableCellWidget(
                       height: data.headerHeight,
                       width: width,
